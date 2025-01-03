@@ -38,16 +38,6 @@ void handleRoot() {
  server.send(200, "text/html", s); //Send web page
 }
  
-void handleLight() {
- server.send(200, "text/plane", String(light_reading)); //Send ADC value only to client ajax request
-}
-void handleTemp() {
- server.send(200, "text/plane", String(temperature));
-}
-void handlePressure() {
- server.send(200, "text/plane", String(pressure));
-}
-
 void handleSensorRead() {
   String output;
   //light sensor
@@ -62,12 +52,6 @@ void handleSensorRead() {
 
 }
 
-void handlePenit() {
-  String poop = "poop";
-  String output = poop + "|" + temperature;
-  Serial.println(output);
-  server.send(200, "text/plane",String(output));
-}
 
 void setup() {
   Serial.begin(115200);
