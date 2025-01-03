@@ -3,7 +3,6 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
-#include <ArduinoJson.h>
 
 #include "index.h"
 WebServer server(80);
@@ -28,7 +27,7 @@ float loadvoltage = 0;
 float power_mW = 0;
 
 float temperature;
-float pressure;
+int pressure;
 
 int light_reading=0;
 
@@ -47,6 +46,27 @@ void handleTemp() {
 }
 void handlePressure() {
  server.send(200, "text/plane", String(pressure));
+}
+
+void handleSensorRead() {
+  String output;
+  //light sensor
+  String TemtReadings = String(light_reading);
+  // BMP180 sensor (temperature, pressure)
+  String BmpReadings = String(temperature) + "|" +String(pressure);
+  // ina219 (load voltage, current, power)
+  String inaReadings = String( loadvoltage) + "|" + String(current_mA) + "|" + String(power_mW);
+  // output string
+  output = TemtReadings + "|" + BmpReadings +"|" + inaReadings;
+  server.send(200, "text/plane", String(output));
+
+}
+
+void handlePenit() {
+  String poop = "poop";
+  String output = poop + "|" + temperature;
+  Serial.println(output);
+  server.send(200, "text/plane",String(output));
 }
 
 void setup() {
@@ -78,9 +98,11 @@ void setup() {
 //----------------------------------------------------------------
  
   server.on("/", handleRoot);      //This is display page
+  server.on("/readSensors", handleSensorRead); //handle the request to get all the sensor values
   server.on("/readLightSensor", handleLight);//To get update of ADC Value only
   server.on("/readTemperature", handleTemp);
   server.on("/readPressure", handlePressure);
+  server.on("/readPenit", handlePenit);
  
   server.begin();                  //Start server
   Serial.println("HTTP server started");
@@ -127,22 +149,22 @@ void sensor_read(){
     current_mA = ina219.getCurrent_mA();
     power_mW = ina219.getPower_mW();
     loadvoltage = busvoltage + (shuntvoltage / 1000);
-    Serial.println("----------------");
-    Serial.print("Load Voltage:  "); Serial.print(loadvoltage); Serial.println(" V");
-    Serial.print("Current:       "); Serial.print(current_mA); Serial.println(" mA");
-    Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
+    // Serial.println("----------------");
+    // Serial.print("Load Voltage:  "); Serial.print(loadvoltage); Serial.println(" V");
+    // Serial.print("Current:       "); Serial.print(current_mA); Serial.println(" mA");
+    // Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
   }
   if (bmp_online){//bmp180 readings-----------------
     temperature =bmp.readTemperature();
     pressure=bmp.readPressure();
-    Serial.println("----------------");
-    Serial.print("Temperature = ");
-    Serial.print(temperature);
-    Serial.println(" *C");
+    // Serial.println("----------------");
+    // Serial.print("Temperature = ");
+    // Serial.print(temperature);
+    // Serial.println(" *C");
     
-    Serial.print("Pressure = ");
-   Serial.print(pressure);
-   Serial.println(" Pa");
+  //   Serial.print("Pressure = ");
+  //  Serial.print(pressure);
+  //  Serial.println(" Pa");
   }
 
   //read the light sensor and calculate values
@@ -150,9 +172,9 @@ void sensor_read(){
   float square_ratio = light_reading / 1023.0; //Get percent of maximum value (1023)
   square_ratio = pow(square_ratio, 2.0); //idk lmao
   if (temt_online){//temt6000 readings --------------
-    Serial.println("----------------");
-    Serial.print("Light level: ");
-    Serial.println(light_reading); 
+    // Serial.println("----------------");
+    // Serial.print("Light level: ");
+    // Serial.println(light_reading); 
   }
 }
 
@@ -165,7 +187,6 @@ void loop() {
 
 
   delay(200);//wait as to not destroy the cpu lmao
-  Serial.println("*");//idk space every time the loop goes
   server.handleClient();
 
 }
